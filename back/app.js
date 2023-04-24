@@ -13,7 +13,6 @@ mongoose.connect('mongodb+srv://piiquante:BNkighxlhjrSBfLt@cluster0.skttl4i.mong
     
 const app = express();
 
-
 app.use(express.json());
 
 app.use((req, res, next) => {
