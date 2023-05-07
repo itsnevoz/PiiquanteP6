@@ -1,3 +1,4 @@
+const { log } = require('console');
 const Sauce = require('../models/Sauce');
 const fs = require('fs');
 
@@ -87,3 +88,58 @@ exports.getAllSauces = (req, res, next) => {
     }
   );
 };
+
+function sendClientResponse(sauce, res) {
+  if (sauce == null) {
+    console.log("nothing");
+    return res.status(404).send({message: "object not found"})
+  }
+  // console.log("updated", sauce);
+  return Promise.resolve(res.status(200).send(sauce)).then(() => sauce)
+}
+
+exports.likeSauce = (req, res, sauce) => {
+  const {like, userId} = req.body
+  //like === 0, -1, 1
+  if (![0, -1, 1].includes(like)) return res.status(400).send({ message: "Bad request"})
+
+   Sauce.findOne({_id: req.params.id})
+   .then((sauce) => updateVote(sauce, like, userId))
+   .then(prod => sendClientResponse(prod, res))
+   .catch((err) => res.status(500).send(err))
+}
+
+function updateVote(sauce, like, userId) {
+  if (like === 1) incrementLike(sauce, userId)
+  if (like === -1) decrementLike(sauce, userId)
+  if (like === 0) resetVote(sauce, userId)
+  return sauce.save()
+}
+
+function incrementLike(sauce, userId) {
+  const {usersLiked} = sauce
+  if (usersLiked.includes(userId)) 
+  return 
+  usersLiked.push(userId)
+  sauce.likes++
+  console.log("nombre de like:", sauce.likes);
+}
+
+function decrementLike(sauce, userId) {
+  const usersDisliked = sauce.usersDisliked
+  if (usersDisliked.includes(userId)) return
+  usersDisliked.push(userId)
+  sauce.dislikes++
+}
+
+function resetVote(sauce, userId, res) {
+  const { usersLiked, usersDisliked} = sauce
+  if ([usersLiked, usersDisliked].every(arr => arr.includes(userId))) return 
+  if (![usersLiked, usersDisliked].some(arr => arr.includes(userId))) return
+
+  const votesToUpdate = usersLiked.includes(userId) ? usersLiked : usersDisliked
+
+  let arrayToUpdate = usersLiked.includes(userId) ? usersLiked : usersDisliked
+  const arrayWithoutUser = arrayToUpdate.filter(id => id !==userId)
+  arrayToUpdate = arrayWithoutUser
+}
