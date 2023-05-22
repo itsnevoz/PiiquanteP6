@@ -111,14 +111,12 @@ exports.likeSauce = (req, res, sauce) => {
 }
 
 function updateVote(sauce, like, userId) {
-  // if (like === 1) return incrementLike(sauce, userId)
-  // if (like === -1) return decrementLike(sauce, userId)
   if (like ===1 || like === -1) return incrementVote(sauce, userId, like)
   return resetVote(sauce, userId)
 }
 
 function resetVote(sauce, userId, res) {
-  console.log("reset avant vote", sauce);
+  // console.log("reset avant vote", sauce);
   const { usersLiked, usersDisliked} = sauce
   if ([usersLiked, usersDisliked].every(arr => arr.includes(userId))) return Promise.reject("user have voted like and dislike")
   if (![usersLiked, usersDisliked].some(arr => arr.includes(userId))) return Promise.reject("user have not voted")
@@ -131,17 +129,9 @@ function resetVote(sauce, userId, res) {
   } else {
     sauce.usersDisliked = sauce.usersDisliked.filter(id => id !== userId)
   }
-  console.log("apres reset", sauce);
+  // console.log("apres reset", sauce);
   return sauce
 }
-// function incrementLike(sauce, userId) {
-//   const usersLiked = sauce.usersLiked
-//   if (usersLiked.includes(userId)) return sauce
-//   usersLiked.push(userId)
-//   sauce.likes++
-//   console.log("nombre de like:", sauce.likes);
-//   return sauce
-// }
 
 function incrementVote(sauce, userId, like) {
   const {usersLiked, usersDisliked} = sauce
@@ -153,12 +143,3 @@ function incrementVote(sauce, userId, like) {
   like === 1 ? ++sauce.likes : ++sauce.dislikes
   return sauce
 }
-
-// function decrementLike(sauce, userId) {
-//   const usersDisliked = sauce.usersDisliked
-//   if (usersDisliked.includes(userId)) return sauce
-//   usersDisliked.push(userId)
-//   sauce.dislikes++
-//   console.log("nombre de dislike:", sauce.dislikes);
-//   return sauce
-// }
