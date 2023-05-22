@@ -104,42 +104,61 @@ exports.likeSauce = (req, res, sauce) => {
   if (![0, -1, 1].includes(like)) return res.status(400).send({ message: "Bad request"})
 
    Sauce.findOne({_id: req.params.id})
-   .then((sauce) => updateVote(sauce, like, userId))
+   .then((sauce) => updateVote(sauce, like, userId, res))
+   .then(pr => pr.save())
    .then(prod => sendClientResponse(prod, res))
    .catch((err) => res.status(500).send(err))
 }
 
 function updateVote(sauce, like, userId) {
-  if (like === 1) incrementLike(sauce, userId)
-  if (like === -1) decrementLike(sauce, userId)
-  if (like === 0) resetVote(sauce, userId)
-  return sauce.save()
-}
-
-function incrementLike(sauce, userId) {
-  const {usersLiked} = sauce
-  if (usersLiked.includes(userId)) 
-  return 
-  usersLiked.push(userId)
-  sauce.likes++
-  console.log("nombre de like:", sauce.likes);
-}
-
-function decrementLike(sauce, userId) {
-  const usersDisliked = sauce.usersDisliked
-  if (usersDisliked.includes(userId)) return
-  usersDisliked.push(userId)
-  sauce.dislikes++
+  // if (like === 1) return incrementLike(sauce, userId)
+  // if (like === -1) return decrementLike(sauce, userId)
+  if (like ===1 || like === -1) return incrementVote(sauce, userId, like)
+  return resetVote(sauce, userId)
 }
 
 function resetVote(sauce, userId, res) {
+  console.log("reset avant vote", sauce);
   const { usersLiked, usersDisliked} = sauce
-  if ([usersLiked, usersDisliked].every(arr => arr.includes(userId))) return 
-  if (![usersLiked, usersDisliked].some(arr => arr.includes(userId))) return
+  if ([usersLiked, usersDisliked].every(arr => arr.includes(userId))) return Promise.reject("user have voted like and dislike")
+  if (![usersLiked, usersDisliked].some(arr => arr.includes(userId))) return Promise.reject("user have not voted")
 
-  const votesToUpdate = usersLiked.includes(userId) ? usersLiked : usersDisliked
+  usersLiked.includes(userId) ? --sauce.likes : --sauce.dislikes
 
-  let arrayToUpdate = usersLiked.includes(userId) ? usersLiked : usersDisliked
-  const arrayWithoutUser = arrayToUpdate.filter(id => id !==userId)
-  arrayToUpdate = arrayWithoutUser
+
+  if (usersLiked.includes(userId)){
+    sauce.usersLiked = sauce.usersLiked.filter(id => id !== userId)
+  } else {
+    sauce.usersDisliked = sauce.usersDisliked.filter(id => id !== userId)
+  }
+  console.log("apres reset", sauce);
+  return sauce
 }
+// function incrementLike(sauce, userId) {
+//   const usersLiked = sauce.usersLiked
+//   if (usersLiked.includes(userId)) return sauce
+//   usersLiked.push(userId)
+//   sauce.likes++
+//   console.log("nombre de like:", sauce.likes);
+//   return sauce
+// }
+
+function incrementVote(sauce, userId, like) {
+  const {usersLiked, usersDisliked} = sauce
+
+  const votersArray = like === 1 ? usersLiked : usersDisliked
+  if (votersArray.includes(userId)) return sauce
+  votersArray.push(userId)
+
+  like === 1 ? ++sauce.likes : ++sauce.dislikes
+  return sauce
+}
+
+// function decrementLike(sauce, userId) {
+//   const usersDisliked = sauce.usersDisliked
+//   if (usersDisliked.includes(userId)) return sauce
+//   usersDisliked.push(userId)
+//   sauce.dislikes++
+//   console.log("nombre de dislike:", sauce.dislikes);
+//   return sauce
+// }

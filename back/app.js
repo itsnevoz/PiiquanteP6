@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express');
 const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit')
 
 const saucesRoutes = require('./routes/sauces')
 const userRoutes = require('./routes/user')
@@ -16,6 +17,14 @@ mongoose.connect(`mongodb+srv://${user}:${password}@cluster0.skttl4i.mongodb.net
     .catch(() => console.log('Connexion à MongoDB échouée !'));
     
 const app = express();
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, //15 minutes
+  max: 100, // 100 requete IP par windowMs
+})
+
+
+app.use(limiter);
 
 app.use(express.json());
 
